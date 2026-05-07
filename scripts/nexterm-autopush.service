@@ -1,0 +1,16 @@
+[Unit]
+Description=NexTerm — auto git commit & push on file change
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/docker/nexterm/scripts/autopush.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nexterm-autopush
+
+[Install]
+WantedBy=multi-user.target
