@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexTerm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ── Sidebar ── -->
+  <aside id="sidebar">
+    <div class="sb-header">
+      <div class="brand">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="14" rx="2"/>
+          <path d="M8 10l3 3-3 3M14 16h3"/>
+        </svg>
+        <span class="brand-name">NexTerm</span>
+      </div>
+      <button class="icon-btn" id="collapse-btn" title="Collapse sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="21" y2="12"/>
+          <line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sb-body">
+      <div class="section-header">
+        <span class="section-label">SERVERS</span>
+        <button class="icon-btn" id="add-server-btn" title="Add server">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+      <div id="server-list"></div>
+    </div>
+
+    <div class="sb-footer">
+      <span class="version-label">v1.0</span>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main id="main">
+
+    <!-- Welcome screen -->
+    <div id="welcome-screen">
+      <div class="wc-glow wc-glow-1"></div>
+      <div class="wc-glow wc-glow-2"></div>
+      <div class="welcome-card">
+        <svg class="wc-icon" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="8" width="56" height="40" rx="4" stroke-width="2.5"/>
+          <path d="M16 28l10 8-10 8" stroke-width="3"/>
+          <line x1="34" y1="36" x2="50" y2="36" stroke-width="3"/>
+          <line x1="4" y1="56" x2="60" y2="56" stroke-width="2.5"/>
+          <line x1="20" y1="56" x2="20" y2="48" stroke-width="2.5"/>
+          <line x1="44" y1="56" x2="44" y2="48" stroke-width="2.5"/>
+        </svg>
+        <h1 class="wc-title">Welcome to <span class="text-accent">NexTerm</span></h1>
+        <p class="wc-sub">Your modern web-based SSH client. Add a server to start your first session.</p>
+        <div class="wc-actions">
+          <button class="btn btn-primary btn-lg" id="welcome-add-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Server
+          </button>
+        </div>
+        <div class="wc-hint">
+          <kbd>Ctrl</kbd><span>+</span><kbd>T</kbd> new tab &nbsp;·&nbsp;
+          <kbd>Ctrl</kbd><span>+</span><kbd>W</kbd> close tab &nbsp;·&nbsp;
+          <kbd>Ctrl</kbd><span>+</span><kbd>Tab</kbd> switch
+        </div>
+      </div>
+    </div>
+
+    <!-- Terminal area -->
+    <div id="terminal-area" class="hidden">
+      <div id="tab-bar">
+        <div id="tabs-container"></div>
+        <button class="tab-add-btn" id="tab-add-btn" title="New session (Ctrl+T)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+      <div id="terminals-wrapper"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Server Modal ── -->
+<div id="server-modal" class="modal" style="display:none">
+  <div class="modal-backdrop" data-close="server-modal"></div>
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 id="server-modal-title">Add Server</h2>
+      <button class="modal-close-btn" data-close="server-modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form id="server-form" autocomplete="off">
+      <input type="hidden" id="edit-server-id">
+
+      <div class="form-group">
+        <label for="f-name">Display Name</label>
+        <input type="text" id="f-name" placeholder="My Server" maxlength="64" autocomplete="off">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group grow">
+          <label for="f-host">Host / IP <span class="req">*</span></label>
+          <input type="text" id="f-host" placeholder="192.168.1.31" required autocomplete="off">
+        </div>
+        <div class="form-group w80">
+          <label for="f-port">Port</label>
+          <input type="number" id="f-port" value="22" min="1" max="65535">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="f-username">Username <span class="req">*</span></label>
+        <input type="text" id="f-username" placeholder="root" required autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label>Authentication</label>
+        <div class="segmented" id="auth-seg">
+          <button type="button" class="seg-btn active" data-seg="password">Password</button>
+          <button type="button" class="seg-btn" data-seg="key">Private Key</button>
+          <button type="button" class="seg-btn" data-seg="none">Ask Later</button>
+        </div>
+      </div>
+
+      <div id="auth-password-sec" class="auth-sec">
+        <div class="form-group">
+          <label for="f-password">Password</label>
+          <div class="input-icon-wrap">
+            <input type="password" id="f-password" placeholder="••••••••" autocomplete="new-password">
+            <button type="button" class="input-eye" data-target="f-password" tabindex="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="eye-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="eye-closed" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <p class="form-hint">Stored locally. Leave empty to be prompted at connect time.</p>
+        </div>
+      </div>
+
+      <div id="auth-key-sec" class="auth-sec hidden">
+        <div class="form-group">
+          <label for="f-private-key">Private Key <span class="form-hint-inline">(PEM format)</span></label>
+          <textarea id="f-private-key" rows="5" placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----&#10;"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="f-passphrase">Key Passphrase <span class="form-hint-inline">(optional)</span></label>
+          <input type="password" id="f-passphrase" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close="server-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="server-save-btn">Save Server</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Quick Connect Modal ── -->
+<div id="connect-modal" class="modal" style="display:none">
+  <div class="modal-backdrop" data-close="connect-modal"></div>
+  <div class="modal-panel modal-sm">
+    <div class="modal-header">
+      <div>
+        <h2>Connect</h2>
+        <p class="modal-subtitle" id="qc-subtitle"></p>
+      </div>
+      <button class="modal-close-btn" data-close="connect-modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <form id="connect-form" autocomplete="off">
+      <input type="hidden" id="qc-server-id">
+
+      <div class="form-group">
+        <label>Authentication</label>
+        <div class="segmented" id="qc-auth-seg">
+          <button type="button" class="seg-btn active" data-qcseg="password">Password</button>
+          <button type="button" class="seg-btn" data-qcseg="key">Private Key</button>
+        </div>
+      </div>
+
+      <div id="qc-password-sec">
+        <div class="form-group">
+          <label for="qc-password">Password</label>
+          <div class="input-icon-wrap">
+            <input type="password" id="qc-password" placeholder="••••••••" autocomplete="current-password" autofocus>
+            <button type="button" class="input-eye" data-target="qc-password" tabindex="-1">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="eye-open"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="eye-closed" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="qc-key-sec" class="hidden">
+        <div class="form-group">
+          <label for="qc-private-key">Private Key</label>
+          <textarea id="qc-private-key" rows="4" placeholder="-----BEGIN RSA PRIVATE KEY-----..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="qc-passphrase">Passphrase</label>
+          <input type="password" id="qc-passphrase" placeholder="Optional">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" data-close="connect-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:16px;height:16px">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+          Connect
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Notifications ── -->
+<div id="notifications"></div>
+
+<!-- ── Scripts ── -->
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xterm-addon-web-links@0.9.0/lib/xterm-addon-web-links.min.js"></script>
+<script src="/app.js"></script>
+
+</body>
+</html>

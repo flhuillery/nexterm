@@ -1,0 +1,13 @@
+services:
+  nexterm:
+    build: .
+    container_name: nexterm
+    ports:
+      - "3022:3000"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATA_FILE=/data/servers.json
